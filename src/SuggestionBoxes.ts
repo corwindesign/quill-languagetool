@@ -1,7 +1,7 @@
-import debug from "./debug";
-import Delta from "quill-delta";
 import type Quill from "quill";
+import Delta from "quill-delta";
 import { QuillLanguageTool } from ".";
+import debug from "./debug";
 
 /**
  * Clean all suggestion boxes from an HTML string
@@ -17,7 +17,7 @@ export function getCleanedHtml(html: string) {
  * Remove all suggestion boxes from the editor.
  */
 export function removeSuggestionBoxes(quillEditor: Quill) {
-  debug("Removing suggestion boxes for editor", quillEditor);
+  //debug("Removing suggestion boxes for editor", quillEditor);
 
   const initialSelection = quillEditor.getSelection();
   const deltas = quillEditor.getContents();
@@ -71,8 +71,7 @@ export class SuggestionBoxes {
         .retain(match.offset)
         .retain(match.length, { ltmatch: match });
       // @ts-ignore
-      this.parent.quill.updateContents(ops);
-
+      let delta = this.parent.quill.updateContents(ops, "api");
       debug("Adding formatter", "lt-match", match.offset, match.length);
     });
   }
