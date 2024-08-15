@@ -112,6 +112,9 @@ quill-lt-popup[data-popper-placement^="left"] > .quill-lt-popup-arrow {
 quill-lt-popup[data-popper-placement^="right"] > .quill-lt-popup-arrow {
   left: -4px;
 }
+quill-lt-popup {
+  z-index: 9;
+}
 
 /* Loading indicator in editor */
 .quill-lt-loading-indicator {
