@@ -1,11 +1,11 @@
 import type Quill from "quill";
 import debug from "./debug";
-import { SuggestionBoxes } from "./SuggestionBoxes";
-import "./QuillLanguageTool.css";
-import createSuggestionBlotForQuillInstance from "./SuggestionBlot";
-import PopupManager from "./PopupManager";
-import { LanguageToolApi, LanguageToolApiParams, MatchesEntity } from "./types";
 import LoadingIndicator from "./LoadingIndicator";
+import PopupManager from "./PopupManager";
+import "./QuillLanguageTool.css";
+import { createSuggestionBlotForQuillInstance } from "./SuggestionBlot";
+import { SuggestionBoxes } from "./SuggestionBoxes";
+import { LanguageToolApi, LanguageToolApiParams, MatchesEntity } from "./types";
 
 export type QuillLanguageToolParams = {
   server: string;
@@ -37,7 +37,7 @@ export class QuillLanguageTool {
 
   // Dependencies
   protected boxes = new SuggestionBoxes(this);
-  protected popups = new PopupManager(this);
+  public popups = new PopupManager(this);
   protected loader = new LoadingIndicator(this);
 
   public matches: MatchesEntity[] = [];
@@ -72,7 +72,7 @@ export class QuillLanguageTool {
       clearTimeout(this.typingCooldown);
     }
     this.typingCooldown = setTimeout(() => {
-      debug("User stopped typing, checking spelling");
+      //debug("User stopped typing, checking spelling");
 
       this.checkSpelling();
     }, this.params.cooldownTime);
@@ -83,8 +83,8 @@ export class QuillLanguageTool {
     this.boxes.addSuggestionBoxes();
   }
 
-  private async checkSpelling() {
-    debug("Removing existing suggestion boxes");
+  public async checkSpelling() {
+    //debug("Removing existing suggestion boxes");
     this.boxes.removeSuggestionBoxes();
 
     if (document.querySelector("lt-toolbar")) {
@@ -99,7 +99,7 @@ export class QuillLanguageTool {
     if (json && json.matches) {
       this.matches = json.matches;
 
-      debug("Adding suggestion boxes");
+      //debug("Adding suggestion boxes");
       this.boxes.addSuggestionBoxes();
     } else {
       debug("No matches found");
@@ -121,6 +121,7 @@ export class QuillLanguageTool {
         body: params,
       });
       const json = (await response.json()) as LanguageToolApi;
+      //debug("Got response from LanguageTool", json);
       return json;
     } catch (e) {
       return null;
@@ -128,12 +129,12 @@ export class QuillLanguageTool {
   }
 
   private getApiParams() {
-    const paramsObject = {
+    const paramsObject: { [key: string]: any } = {
       text: this.quill.getText(),
       language: this.params.language,
       ...this.params.apiOptions,
     };
-
+  
     return Object.keys(paramsObject)
       .map((key) => `${key}=${encodeURIComponent(paramsObject[key])}`)
       .join("&");
@@ -173,3 +174,4 @@ export default function registerQuillLanguageTool(Quill: any) {
 }
 
 export { getCleanedHtml, removeSuggestionBoxes } from "./SuggestionBoxes";
+

@@ -34,8 +34,8 @@ export default class PopupManager {
     });
   }
 
-  private closePopup() {
-    console.log("Closing popup", this.openPopup, this.currentSuggestionElement);
+  public closePopup() {
+    //console.log("Closing popup", this.openPopup, this.currentSuggestionElement);
     if (this.openPopup) {
       this.openPopup.remove();
       this.openPopup = undefined;
@@ -125,9 +125,9 @@ export default class PopupManager {
         <div class="quill-lt-popup-arrow" data-popper-arrow></div>
       </quill-lt-popup>
     `;
-
+    
     document.body.appendChild(popup);
-
+    
     createPopper(suggestion, popup, {
       placement: "top-end",
       modifiers: [
@@ -137,6 +137,10 @@ export default class PopupManager {
             offset: [0, 8],
           },
         },
+        {
+          name: "hide",
+          enabled: true,
+        }
       ],
     });
 
