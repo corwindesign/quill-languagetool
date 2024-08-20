@@ -110,7 +110,7 @@ export class QuillLanguageTool {
 
   private async getLanguageToolResults() {
     const params = this.getApiParams();
-
+    debug("Sending request to LanguageTool", params);
     try {
       const response = await fetch(this.params.server + "/v2/check", {
         method: "POST",
@@ -121,7 +121,7 @@ export class QuillLanguageTool {
         body: params,
       });
       const json = (await response.json()) as LanguageToolApi;
-      //debug("Got response from LanguageTool", json);
+      debug("Got response from LanguageTool", json);
       return json;
     } catch (e) {
       return null;
@@ -129,8 +129,15 @@ export class QuillLanguageTool {
   }
 
   private getApiParams() {
+    debug("quill getText", this.quill.getText());
+    debug("quill innerHTML", this.quill.root.innerHTML);
+    debug("quill getText(innerHTML)", this.getText(this.quill.root.innerHTML));
+    let text = this.getText(this.quill.root.innerHTML);
+    let json = JSON.stringify({text: text});
     const paramsObject: { [key: string]: any } = {
-      text: this.quill.getText(),
+      data: json,
+      //text: this.getText(this.quill.root.innerHTML),
+      //text: this.quill.getText(),
       language: this.params.language,
       ...this.params.apiOptions,
     };
@@ -148,6 +155,34 @@ export class QuillLanguageTool {
       this.loopPreventionCooldown = undefined;
     }, 100);
   }
+  
+private getText(htmlString: string): string {
+  const regex = /(<[^>]+>)|([^<]+)/g;
+  let match: RegExpExecArray | null;
+  let output: string = "";
+  htmlString = this.removeFirstInstance(htmlString, "<p>");
+  while ((match = regex.exec(htmlString)) !== null) {
+    if (match[1]) {
+      if (match[1].includes("<img")) {
+        output += " ";
+      } else if (match[1].includes("<p>")) {
+        output += " ";
+      }
+    } else if (match[2]) {
+      output += match[2];
+    }
+  }
+  return output;
+  }
+  
+private removeFirstInstance(str: string, toRemove: string) {
+  const index = str.indexOf(toRemove);
+  if (index === -1) {
+    return str; // Substring not found, return original string
+  }
+  return str.slice(0, index) + str.slice(index + toRemove.length);
+}
+
 }
 
 /**
