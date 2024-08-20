@@ -132,12 +132,9 @@ export class QuillLanguageTool {
     debug("quill getText", this.quill.getText());
     debug("quill innerHTML", this.quill.root.innerHTML);
     debug("quill getText(innerHTML)", this.getText(this.quill.root.innerHTML));
-    let text = this.getText(this.quill.root.innerHTML);
-    let json = JSON.stringify({text: text});
+    let textContent = this.getText(this.quill.root.innerHTML);
     const paramsObject: { [key: string]: any } = {
-      data: json,
-      //text: this.getText(this.quill.root.innerHTML),
-      //text: this.quill.getText(),
+      text: textContent,
       language: this.params.language,
       ...this.params.apiOptions,
     };
