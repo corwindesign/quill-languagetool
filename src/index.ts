@@ -52,11 +52,12 @@ export class QuillLanguageTool {
     debug("Attaching QuillLanguageTool to Quill instance", quill);
 
     this.quill.on("text-change", (_delta, _oldDelta, source) => {
+      debug("text-change",[_delta, _oldDelta, source])
       if (source === "user") {
         this.onTextChange();
       }
     });
-    this.checkSpelling();
+    //this.checkSpelling();
     this.disableNativeSpellcheckIfSet();
   }
 
@@ -72,9 +73,9 @@ export class QuillLanguageTool {
       clearTimeout(this.typingCooldown);
     }
     this.typingCooldown = setTimeout(() => {
-      //debug("User stopped typing, checking spelling");
+      debug("User stopped typing, checking spelling");
 
-      this.checkSpelling();
+       this.checkSpelling();
     }, this.params.cooldownTime);
   }
 
@@ -84,8 +85,10 @@ export class QuillLanguageTool {
   }
 
   public async checkSpelling() {
-    //debug("Removing existing suggestion boxes");
-    this.boxes.removeSuggestionBoxes();
+    let textContent = this.getText(this.quill.root.innerHTML);
+    if (textContent.trim().length <= 1) {
+      return;
+    }
 
     if (document.querySelector("lt-toolbar")) {
       debug("Languagetool is installed as extension, not checking");
@@ -94,7 +97,10 @@ export class QuillLanguageTool {
 
     debug("Checking spelling");
     this.loader.startLoading();
-    const json = await this.getLanguageToolResults();
+    const json = await this.getLanguageToolResultsJson();
+
+    //debug("Removing existing suggestion boxes");
+    this.boxes.removeSuggestionBoxes();
 
     if (json && json.matches) {
       this.matches = json.matches;
@@ -103,19 +109,39 @@ export class QuillLanguageTool {
       this.boxes.addSuggestionBoxes();
     } else {
       debug("No matches found");
-      this.matches = [];
+      //this.matches = [];
     }
     this.loader.stopLoading();
   }
 
-  private async getLanguageToolResults() {
-    const params = this.getApiParams();
+  // private async getLanguageToolResults() {
+  //   const params = this.getApiParams();
+  //   debug("Sending request to LanguageTool", params);
+  //   try {
+  //     const response = await fetch(this.params.server, {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/x-www-form-urlencoded",
+  //       },
+  //       mode: "cors",
+  //       body: params,
+  //     });
+  //     const json = (await response.json()) as LanguageToolApi;
+  //     debug("Got response from LanguageTool", json);
+  //     return json;
+  //   } catch (e) {
+  //     return null;
+  //   }
+  // }
+
+  private async getLanguageToolResultsJson() {
+    const params = this.getApiParamsJson();
     debug("Sending request to LanguageTool", params);
     try {
-      const response = await fetch(this.params.server + "/v2/check", {
+      const response = await fetch(this.params.server, {
         method: "POST",
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Type": "application/json",
         },
         mode: "cors",
         body: params,
@@ -128,20 +154,30 @@ export class QuillLanguageTool {
     }
   }
 
-  private getApiParams() {
-    debug("quill getText", this.quill.getText());
-    debug("quill innerHTML", this.quill.root.innerHTML);
-    debug("quill getText(innerHTML)", this.getText(this.quill.root.innerHTML));
+  // private getApiParams() {
+  //   debug("quill getText", this.quill.getText());
+  //   debug("quill innerHTML", this.quill.root.innerHTML);
+  //   debug("quill getText(innerHTML)", this.getText(this.quill.root.innerHTML));
+  //   let textContent = this.getText(this.quill.root.innerHTML);
+  //   const paramsObject: { [key: string]: any } = {
+  //     text: textContent,
+  //     language: this.params.language,
+  //     ...this.params.apiOptions,
+  //   };
+  
+  //   return Object.keys(paramsObject)
+  //     .map((key) => `${key}=${encodeURIComponent(paramsObject[key])}`)
+  //     .join("&");
+  // }
+
+  private getApiParamsJson() {
     let textContent = this.getText(this.quill.root.innerHTML);
     const paramsObject: { [key: string]: any } = {
       text: textContent,
       language: this.params.language,
       ...this.params.apiOptions,
     };
-  
-    return Object.keys(paramsObject)
-      .map((key) => `${key}=${encodeURIComponent(paramsObject[key])}`)
-      .join("&");
+    return JSON.stringify(paramsObject);
   }
 
   public preventLoop() {
@@ -166,7 +202,13 @@ private getText(htmlString: string): string {
         output += " ";
       }
     } else if (match[2]) {
-      output += match[2];
+      if (match[2].includes('&amp;')) {
+        output += match[2].replace(/&amp;/g, '&');
+      } else if (match[2].includes('&nbsp;')) {
+        output += match[2].replace(/&nbsp;/g, ' ');
+      } else {
+        output += match[2];
+      }
     }
   }
   return output;

@@ -1,4 +1,4 @@
-import type Quill from "quill";
+import Quill from "quill";
 import Delta from "quill-delta";
 import { QuillLanguageTool } from ".";
 import debug from "./debug";
@@ -20,6 +20,7 @@ export function removeSuggestionBoxes(quillEditor: Quill) {
   //debug("Removing suggestion boxes for editor", quillEditor);
 
   const initialSelection = quillEditor.getSelection();
+  debug("removeSuggestionBoxes, initialSelection: ", initialSelection )
   const deltas = quillEditor.getContents();
 
   const deltasWithoutSuggestionBoxes = deltas.ops.map((delta) => {
@@ -34,12 +35,18 @@ export function removeSuggestionBoxes(quillEditor: Quill) {
     }
     return delta;
   });
-
+  if (quillEditor.history) {
+    quillEditor.history.ignoreChange = true;
+  }
+  
   // @ts-ignore
-  quillEditor.setContents(new Delta(deltasWithoutSuggestionBoxes));
+  quillEditor.setContents(new Delta(deltasWithoutSuggestionBoxes), Quill.sources.SILENT);
 
+  if (quillEditor.history) {
+    quillEditor.history.ignoreChange = false;
+  }
   if (initialSelection) {
-    quillEditor.setSelection(initialSelection);
+    quillEditor.setSelection(initialSelection, Quill.sources.SILENT);
   }
 }
 
@@ -64,15 +71,26 @@ export class SuggestionBoxes {
    * This uses the matches stored in the parent class
    */
   public addSuggestionBoxes() {
+    const initialSelection = this.parent.quill.getSelection();
+    debug("addSuggestionBoxes, initialSelection: ", initialSelection )
     this.parent.matches.forEach((match) => {
       this.parent.preventLoop();
 
       const ops = new Delta()
         .retain(match.offset)
         .retain(match.length, { ltmatch: match });
+        if (this.parent.quill.history) {
+          this.parent.quill.history.ignoreChange = true;
+        }
       // @ts-ignore
-      let delta = this.parent.quill.updateContents(ops, "api");
-      debug("Adding formatter", "lt-match", match.offset, match.length);
+      let delta = this.parent.quill.updateContents(ops, Quill.sources.SILENT);
+      //debug("Adding formatter", "lt-match", match.offset, match.length);
+      if (this.parent.quill.history) {
+        this.parent.quill.history.ignoreChange = false;
+      }
     });
+    if (initialSelection) {
+      this.parent.quill.setSelection(initialSelection, Quill.sources.SILENT);
+    }
   }
 }

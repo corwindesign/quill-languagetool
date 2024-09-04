@@ -1,3 +1,4 @@
+//import debug from "./debug";
 import { MatchesEntity } from "./types";
 
 /**
@@ -16,7 +17,8 @@ export function createSuggestionBlotForQuillInstance(Quill: any) {
 
     static create(match?: MatchesEntity) {
       let node: HTMLElement = super.create();
-      if (match) {
+      if (match && match.offset) {
+        //debug("Creating blot with match", match);
         node.setAttribute("data-offset", match.offset.toString());
         node.setAttribute("data-length", match.length.toString());
         node.setAttribute("data-rule-id", match.rule.id);

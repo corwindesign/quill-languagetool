@@ -1,7 +1,9 @@
 import { createPopper } from "@popperjs/core";
 import html from "nanohtml/lib/browser";
 import raw from "nanohtml/raw";
+import Quill from "quill";
 import { QuillLanguageTool } from ".";
+import debug from "./debug";
 import { MatchesEntity } from "./types";
 
 /**
@@ -44,9 +46,12 @@ export default class PopupManager {
   }
 
   private handleSuggestionClick(suggestion: HTMLElement) {
+    debug("Suggestion clicked", suggestion);
     const offset = parseInt(suggestion.getAttribute("data-offset") || "0");
     const length = parseInt(suggestion.getAttribute("data-length") || "0");
     const ruleId = suggestion.getAttribute("data-rule-id");
+    debug("Suggestion clicked", offset, length, ruleId);
+    debug("Matches", this.parent.matches);
     const rule = this.parent.matches.find(
       (r) => r.offset === offset && r.length === length && r.rule.id === ruleId
     );
@@ -82,14 +87,17 @@ export default class PopupManager {
 
     const applySuggestion = (replacement: string) => {
       this.parent.preventLoop();
-      this.parent.quill.setSelection(match.offset, match.length);
-      this.parent.quill.deleteText(match.offset, match.length);
-      this.parent.quill.insertText(match.offset, replacement);
+      
+      this.parent.quill.setSelection(match.offset, match.length, Quill.sources.SILENT);
+      this.parent.quill.deleteText(match.offset, match.length, Quill.sources.SILENT);
+      this.parent.quill.insertText(match.offset, replacement, Quill.sources.SILENT);
       // @ts-ignore
-      this.parent.quill.setSelection(match.offset + replacement.length);
-
+      this.parent.quill.setSelection(match.offset + replacement.length, Quill.sources.SILENT);
+      // if (this.parent.quill.history) {
+      //   this.parent.quill.history.cutoff();
+      // }
+      
       this.updateOffsets(replacement.length, match.length, match.offset);
-
       this.closePopup();
     };
 
