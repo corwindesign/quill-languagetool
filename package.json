@@ -52,7 +52,7 @@
     "react": "^16.9.0",
     "react-scripts": "^4.0",
     "react-test-renderer": "^16.9.0",
-    "rollup": "^2.26.9",
+    "rollup": "^3.29.5",
     "rollup-plugin-peer-deps-external": "^2.2.0",
     "rollup-plugin-postcss": "^4.0.2",
     "tslib": "^2.0.1",
